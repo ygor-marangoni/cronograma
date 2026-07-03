@@ -1,0 +1,12 @@
+# Dados locais/exportados do usuario
+*.json
+data/*.json
+
+# Logs e servidores locais de teste
+*.log
+server-*.log
+
+# Sistema operacional / editor
+.DS_Store
+Thumbs.db
+.vscode/
