@@ -1,30 +1,30 @@
-# Academico
+# Acadêmico
 
-Agenda academica simples, rapida e sem conta para organizar tarefas, provas, estudos, aulas e prazos. O projeto e um app estatico feito com HTML, CSS e JavaScript puro, pronto para publicar em Cloudflare Pages, GitHub Pages ou qualquer hospedagem de arquivos estaticos.
+Agenda acadêmica simples, rápida e sem conta para organizar tarefas, provas, estudos, aulas e prazos. O projeto é um app estático feito com HTML, CSS e JavaScript puro, pronto para publicar em Cloudflare Pages, GitHub Pages ou qualquer hospedagem de arquivos estáticos.
 
 ## Recursos
 
-- Calendario mensal, semanal, agenda e linha do tempo.
-- Criacao, edicao, duplicacao, exclusao e conclusao de tarefas.
+- Calendário mensal, semanal, agenda e linha do tempo.
+- Criação, edição, duplicação, exclusão e conclusão de tarefas.
 - Filtros por prioridade, status e tipo.
-- Busca por titulo, descricao, disciplina ou tipo.
+- Busca por título, descrição, disciplina ou tipo.
 - Tema claro e escuro.
-- Inputs personalizados para select, data e horario.
-- Importacao e exportacao de dados em JSON.
+- Inputs personalizados para select, data e horário.
+- Importação e exportação de dados em JSON.
 - Dados salvos localmente no navegador com `localStorage`.
 
 ## Privacidade e dados
 
-O app nao usa login, banco de dados ou servidor proprio. Cada pessoa que acessa a aplicacao tem seus dados salvos apenas no navegador em que esta usando.
+O app não usa login, banco de dados ou servidor próprio. Cada pessoa que acessa a aplicação tem seus dados salvos apenas no navegador em que está usando.
 
 Isso significa:
 
-- usuarios diferentes nao compartilham dados entre si;
-- publicar o projeto nao publica sua agenda pessoal;
+- usuários diferentes não compartilham dados entre si;
+- publicar o projeto não publica sua agenda pessoal;
 - seus dados locais continuam no seu navegador;
-- para levar dados para outro navegador ou dominio, use `Exportar` e depois `Importar`.
+- para levar dados para outro navegador ou domínio, use `Exportar` e depois `Importar`.
 
-O arquivo `data/agenda.json` e tratado como dado local/inicial e fica ignorado pelo Git para evitar subir informacoes pessoais ao repositorio.
+O arquivo `data/agenda.json` é tratado como dado local/inicial e fica ignorado pelo Git para evitar subir informações pessoais ao repositório.
 
 ## Estrutura
 
@@ -42,7 +42,7 @@ O arquivo `data/agenda.json` e tratado como dado local/inicial e fica ignorado p
 
 ## Rodando localmente
 
-Como o projeto e estatico, basta abrir o `index.html` no navegador. Se preferir rodar com servidor local:
+Como o projeto é estático, basta abrir o `index.html` no navegador. Se preferir rodar com servidor local:
 
 ```bash
 python -m http.server 5173
@@ -56,9 +56,9 @@ http://127.0.0.1:5173
 
 ## Deploy na Cloudflare Pages
 
-Use Cloudflare Pages, nao Workers.
+Use Cloudflare Pages, não Workers.
 
-Configuracao recomendada:
+Configuração recomendada:
 
 ```txt
 Framework preset: None
@@ -67,7 +67,7 @@ Build output directory: /
 Root directory: vazio
 ```
 
-Se a Cloudflare nao aceitar `/` como output directory, use:
+Se a Cloudflare não aceitar `/` como output directory, use:
 
 ```txt
 Build output directory: .
@@ -75,18 +75,18 @@ Build output directory: .
 
 ## Desenvolvimento
 
-Nao ha etapa de build. Os arquivos principais sao:
+Não há etapa de build. Os arquivos principais são:
 
 - `index.html`: estrutura da interface.
 - `style.css`: tema, responsividade e componentes visuais.
-- `script.js`: estado, calendario, tarefas, filtros, importacao/exportacao e persistencia local.
+- `script.js`: estado, calendário, tarefas, filtros, importação/exportação e persistência local.
 
-Antes de publicar alteracoes no JavaScript, voce pode validar a sintaxe com:
+Antes de publicar alterações no JavaScript, você pode validar a sintaxe com:
 
 ```bash
 node --check script.js
 ```
 
-## Licenca
+## Licença
 
-Projeto pessoal para organizacao academica.
+Projeto pessoal para organização acadêmica.
