@@ -930,11 +930,28 @@ function handleTaskAction(event) {
 function showToast(message, type = "info") {
   const toast = document.createElement("div");
   toast.className = `toast ${type}`;
-  toast.textContent = message;
+  toast.setAttribute("role", type === "error" ? "alert" : "status");
+
+  const content = document.createElement("div");
+  content.className = "toast-content";
+
+  const title = document.createElement("span");
+  title.className = "toast-message";
+  title.textContent = message;
+
+  const closeButton = document.createElement("button");
+  closeButton.type = "button";
+  closeButton.className = "toast-close";
+  closeButton.setAttribute("aria-label", "Fechar notificação");
+  closeButton.textContent = "×";
+  closeButton.addEventListener("click", () => toast.remove());
+
+  content.appendChild(title);
+  toast.append(content, closeButton);
   els.toastContainer.appendChild(toast);
   window.setTimeout(() => {
     toast.remove();
-  }, 2800);
+  }, type === "error" ? 4200 : 3200);
 }
 
 function closeSidebar() {
