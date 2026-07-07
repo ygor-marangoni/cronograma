@@ -10,6 +10,12 @@ const TYPE_META = {
   outro: { label: "Outro", color: "#9ca3af" }
 };
 
+const PRIORITY_META = {
+  alta: { label: "Alta", color: "#ef4444" },
+  media: { label: "Média", color: "#f59e0b" },
+  baixa: { label: "Baixa", color: "#22c55e" }
+};
+
 const WEEK_DAYS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 const DATA_URL = "data/agenda.json";
 const STORAGE_KEY = "academico_agenda_tasks_v1";
@@ -712,11 +718,7 @@ function renderAll() {
 }
 
 function priorityLabel(priority) {
-  return {
-    alta: "Alta",
-    media: "Média",
-    baixa: "Baixa"
-  }[priority] || "Média";
+  return PRIORITY_META[priority]?.label || PRIORITY_META.media.label;
 }
 
 function setSelectedDate(date) {
@@ -770,8 +772,8 @@ function changePeriod(amount) {
 function openModal(task = null, date = state.selectedDate) {
   state.editingTaskId = task?.id || null;
   els.taskForm.reset();
-  els.titleError.textContent = "";
-  els.dateError.textContent = "";
+  setFieldError(els.taskTitle, els.titleError, "");
+  setFieldError(els.taskDate, els.dateError, "");
   els.modalTitle.textContent = task ? "Editar tarefa" : "Nova tarefa";
   els.taskId.value = task?.id || "";
   els.taskTitle.value = task?.title || "";
@@ -792,18 +794,26 @@ function closeModal() {
   state.editingTaskId = null;
 }
 
+function setFieldError(field, errorNode, message) {
+  const fieldWrap = field.closest(".form-field");
+  const hasError = Boolean(message);
+  errorNode.textContent = message;
+  field.setAttribute("aria-invalid", String(hasError));
+  fieldWrap?.classList.toggle("has-error", hasError);
+}
+
 function validateForm() {
   let valid = true;
-  els.titleError.textContent = "";
-  els.dateError.textContent = "";
+  setFieldError(els.taskTitle, els.titleError, "");
+  setFieldError(els.taskDate, els.dateError, "");
 
   if (!els.taskTitle.value.trim()) {
-    els.titleError.textContent = "Informe um título.";
+    setFieldError(els.taskTitle, els.titleError, "Informe um título.");
     valid = false;
   }
 
   if (!els.taskDate.value) {
-    els.dateError.textContent = "Informe uma data.";
+    setFieldError(els.taskDate, els.dateError, "Informe uma data.");
     valid = false;
   }
 
@@ -1125,8 +1135,27 @@ function hideCustomPickerScrollbar() {
   customPickerScrollbarDrag = null;
 }
 
+function createControlIcon(name) {
+  const span = document.createElement("span");
+  span.className = "custom-control-icon";
+  span.setAttribute("aria-hidden", "true");
+  const icons = {
+    calendar: '<svg viewBox="0 0 24 24" fill="none"><path d="M7 3v3M17 3v3M4 9h16M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    clock: '<svg viewBox="0 0 24 24" fill="none"><path d="M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+  };
+  span.innerHTML = icons[name] || "";
+  return span;
+}
+
+function optionMetaForSelect(select, value) {
+  if (select.id === "taskType" || select.id === "filterType") return TYPE_META[value] || null;
+  if (select.id === "taskPriority" || select.id === "filterPriority") return PRIORITY_META[value] || null;
+  return null;
+}
+
 function initCustomControls() {
   initCustomSelects();
+  initSegmentedControls();
   initCustomDatePicker(els.taskDate);
   initCustomTimePicker(els.taskTime);
 
@@ -1144,7 +1173,7 @@ function initCustomControls() {
 }
 
 function initCustomSelects() {
-  document.querySelectorAll("select.filter-select, select.form-select").forEach((select) => {
+  document.querySelectorAll("select.filter-select, select.form-select:not([data-segmented])").forEach((select) => {
     const compact = select.classList.contains("filter-select");
     const wrap = document.createElement("div");
     const trigger = document.createElement("button");
@@ -1152,6 +1181,7 @@ function initCustomSelects() {
     const caret = document.createElement("span");
     const list = document.createElement("div");
     const control = {};
+    let activeIndex = -1;
 
     select.classList.add("native-control-proxy");
     wrap.className = `custom-control custom-select ${compact ? "custom-select-filter" : "custom-select-form"}`;
@@ -1171,13 +1201,21 @@ function initCustomSelects() {
 
     function buildOptions() {
       list.innerHTML = "";
-      Array.from(select.options).forEach((option) => {
+      Array.from(select.options).forEach((option, index) => {
         const item = document.createElement("button");
+        const meta = optionMetaForSelect(select, option.value);
         item.type = "button";
         item.className = "custom-select-option";
         item.setAttribute("role", "option");
         item.dataset.value = option.value;
-        item.textContent = option.textContent;
+        item.dataset.index = String(index);
+        if (meta?.color) {
+          const dot = document.createElement("span");
+          dot.className = "custom-select-dot";
+          dot.style.setProperty("--option-color", meta.color);
+          item.appendChild(dot);
+        }
+        item.appendChild(document.createTextNode(option.textContent));
         item.addEventListener("click", () => {
           select.value = option.value;
           emitFieldChange(select);
@@ -1188,14 +1226,38 @@ function initCustomSelects() {
       });
     }
 
+    function setActiveOption(index) {
+      const items = Array.from(list.querySelectorAll(".custom-select-option"));
+      if (!items.length) return;
+      activeIndex = Math.max(0, Math.min(index, items.length - 1));
+      items.forEach((item, itemIndex) => {
+        item.classList.toggle("is-active", itemIndex === activeIndex);
+      });
+      items[activeIndex]?.scrollIntoView({ block: "nearest" });
+    }
+
+    function selectActiveOption() {
+      const items = Array.from(list.querySelectorAll(".custom-select-option"));
+      const item = items[activeIndex] || items.find((option) => option.dataset.value === select.value);
+      if (!item) return;
+      select.value = item.dataset.value;
+      emitFieldChange(select);
+      close();
+      sync();
+      trigger.focus();
+    }
+
     function sync() {
       const selected = select.selectedOptions[0] || select.options[0];
       valueNode.textContent = selected ? selected.textContent : "";
+      valueNode.classList.toggle("custom-control-placeholder", !select.value || select.value === "all");
       list.querySelectorAll(".custom-select-option").forEach((item) => {
         const selectedItem = item.dataset.value === select.value;
         item.classList.toggle("selected", selectedItem);
         item.setAttribute("aria-selected", String(selectedItem));
       });
+      const selectedIndex = Array.from(select.options).findIndex((option) => option.value === select.value);
+      activeIndex = selectedIndex >= 0 ? selectedIndex : 0;
     }
 
     function open() {
@@ -1213,7 +1275,10 @@ function initCustomSelects() {
       list.style.setProperty("--select-width", `${rect.width}px`);
       wrap.classList.add("open");
       trigger.setAttribute("aria-expanded", "true");
-      requestAnimationFrame(() => updateCustomPickerScrollbar(list));
+      requestAnimationFrame(() => {
+        setActiveOption(activeIndex);
+        updateCustomPickerScrollbar(list);
+      });
     }
 
     function close() {
@@ -1227,6 +1292,32 @@ function initCustomSelects() {
       if (wrap.classList.contains("open")) close();
       else open();
     });
+    trigger.addEventListener("keydown", (event) => {
+      const isOpen = wrap.classList.contains("open");
+      if (["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
+        event.preventDefault();
+        if (!isOpen) open();
+        const maxIndex = select.options.length - 1;
+        if (event.key === "ArrowDown") setActiveOption(activeIndex + 1);
+        if (event.key === "ArrowUp") setActiveOption(activeIndex - 1);
+        if (event.key === "Home") setActiveOption(0);
+        if (event.key === "End") setActiveOption(maxIndex);
+      }
+      if ((event.key === "Enter" || event.key === " ") && isOpen) {
+        event.preventDefault();
+        selectActiveOption();
+      } else if ((event.key === "Enter" || event.key === " ") && !isOpen) {
+        event.preventDefault();
+        open();
+      }
+      if (event.key === "Escape" && isOpen) {
+        event.preventDefault();
+        close();
+      }
+    });
+    list.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") close();
+    });
     list.addEventListener("scroll", () => updateCustomPickerScrollbar(list));
     list.addEventListener("pointerenter", () => updateCustomPickerScrollbar(list));
 
@@ -1239,11 +1330,87 @@ function initCustomSelects() {
   });
 }
 
+function initSegmentedControls() {
+  document.querySelectorAll("select[data-segmented='true']").forEach((select) => {
+    const wrap = document.createElement("div");
+    const control = {};
+
+    select.classList.add("native-control-proxy");
+    wrap.className = "segmented-control";
+    wrap.setAttribute("role", "radiogroup");
+    wrap.setAttribute("aria-label", select.getAttribute("aria-label") || select.previousElementSibling?.textContent?.replace("*", "").trim() || "Escolha");
+    wrap.style.setProperty("--segments", String(select.options.length || 1));
+    select.insertAdjacentElement("afterend", wrap);
+
+    function sync() {
+      wrap.querySelectorAll(".segmented-option").forEach((button) => {
+        const selected = button.dataset.value === select.value;
+        button.classList.toggle("active", selected);
+        button.setAttribute("aria-checked", String(selected));
+        button.tabIndex = selected ? 0 : -1;
+      });
+    }
+
+    function choose(value) {
+      select.value = value;
+      emitFieldChange(select);
+      sync();
+    }
+
+    function build() {
+      wrap.innerHTML = "";
+      Array.from(select.options).forEach((option, index) => {
+        const meta = optionMetaForSelect(select, option.value);
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "segmented-option";
+        button.dataset.value = option.value;
+        button.setAttribute("role", "radio");
+        button.tabIndex = index === 0 ? 0 : -1;
+
+        if (meta?.color) {
+          const mark = document.createElement("span");
+          mark.className = "priority-mark";
+          mark.style.setProperty("--priority-color", meta.color);
+          button.appendChild(mark);
+        }
+
+        button.appendChild(document.createTextNode(option.textContent));
+        button.addEventListener("click", () => choose(option.value));
+        button.addEventListener("keydown", (event) => {
+          const options = Array.from(wrap.querySelectorAll(".segmented-option"));
+          const currentIndex = options.indexOf(button);
+          let nextIndex = currentIndex;
+
+          if (event.key === "ArrowRight" || event.key === "ArrowDown") nextIndex = (currentIndex + 1) % options.length;
+          if (event.key === "ArrowLeft" || event.key === "ArrowUp") nextIndex = (currentIndex - 1 + options.length) % options.length;
+          if (event.key === "Home") nextIndex = 0;
+          if (event.key === "End") nextIndex = options.length - 1;
+
+          if (nextIndex !== currentIndex) {
+            event.preventDefault();
+            options[nextIndex].focus();
+            choose(options[nextIndex].dataset.value);
+          }
+        });
+        wrap.appendChild(button);
+      });
+      sync();
+    }
+
+    select.addEventListener("change", sync);
+    control.sync = sync;
+    customControls.push(control);
+    build();
+  });
+}
+
 function initCustomDatePicker(input) {
   if (!input) return;
   const today = stripTime(new Date());
   const wrap = document.createElement("div");
   const trigger = document.createElement("button");
+  const icon = createControlIcon("calendar");
   const valueNode = document.createElement("span");
   const caret = document.createElement("span");
   const popover = document.createElement("div");
@@ -1262,7 +1429,7 @@ function initCustomDatePicker(input) {
   caret.className = "custom-caret";
   popover.className = "custom-picker-popover custom-date-popover";
   popover.hidden = true;
-  trigger.append(valueNode, caret);
+  trigger.append(icon, valueNode, caret);
   wrap.append(trigger, popover);
   input.insertAdjacentElement("afterend", wrap);
 
@@ -1482,7 +1649,8 @@ function initCustomDatePicker(input) {
       const date = fromISO(input.value);
       referenceDate = new Date(date.getFullYear(), date.getMonth(), 1);
     }
-    valueNode.textContent = input.value ? formatDateInputValue(input.value) : "Selecione uma data";
+    valueNode.textContent = input.value ? formatDateInputValue(input.value) : "dd/mm/aaaa";
+    valueNode.classList.toggle("custom-control-placeholder", !input.value);
     wrap.classList.toggle("has-value", Boolean(input.value));
     render();
   }
@@ -1534,6 +1702,7 @@ function initCustomTimePicker(input) {
   if (!input) return;
   const wrap = document.createElement("div");
   const trigger = document.createElement("div");
+  const icon = createControlIcon("clock");
   const visibleInput = document.createElement("input");
   const toggle = document.createElement("button");
   const caret = document.createElement("span");
@@ -1555,7 +1724,7 @@ function initCustomTimePicker(input) {
   popover.className = "custom-picker-popover custom-time-popover";
   popover.hidden = true;
   toggle.appendChild(caret);
-  trigger.append(visibleInput, toggle);
+  trigger.append(icon, visibleInput, toggle);
   wrap.append(trigger, popover);
   input.insertAdjacentElement("afterend", wrap);
 
@@ -1746,6 +1915,14 @@ function bindEvents() {
   els.searchInput.addEventListener("input", () => {
     state.filters.search = els.searchInput.value.trim();
     renderAll();
+  });
+
+  els.taskTitle.addEventListener("input", () => {
+    if (els.taskTitle.value.trim()) setFieldError(els.taskTitle, els.titleError, "");
+  });
+
+  els.taskDate.addEventListener("change", () => {
+    if (els.taskDate.value) setFieldError(els.taskDate, els.dateError, "");
   });
 
   els.filterPriority.addEventListener("change", () => {

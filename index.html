@@ -257,31 +257,31 @@
       <form class="modal-form" id="taskForm" novalidate>
         <input type="hidden" id="taskId">
 
-        <div class="form-group form-full">
+        <div class="form-group form-field form-full">
           <label class="form-label" for="taskTitle">Título <span class="required" aria-hidden="true">*</span></label>
-          <input type="text" class="form-input" id="taskTitle" placeholder="Ex.: Prova de Algoritmos..." autocomplete="off" required>
+          <input type="text" class="form-input" id="taskTitle" placeholder="Ex.: Prova de Algoritmos..." autocomplete="off" aria-describedby="titleError" required>
           <span class="form-error" id="titleError" role="alert"></span>
         </div>
 
-        <div class="form-group form-full">
+        <div class="form-group form-field form-full">
           <label class="form-label" for="taskDescription">Descrição</label>
           <textarea class="form-textarea" id="taskDescription" placeholder="Detalhes adicionais..." rows="2"></textarea>
         </div>
 
         <div class="form-row">
-          <div class="form-group">
+          <div class="form-group form-field">
             <label class="form-label" for="taskDate">Data <span class="required" aria-hidden="true">*</span></label>
-            <input type="date" class="form-input" id="taskDate" required>
+            <input type="date" class="form-input" id="taskDate" aria-describedby="dateError" required>
             <span class="form-error" id="dateError" role="alert"></span>
           </div>
-          <div class="form-group">
+          <div class="form-group form-field">
             <label class="form-label" for="taskTime">Horário</label>
             <input type="time" class="form-input" id="taskTime">
           </div>
         </div>
 
         <div class="form-row">
-          <div class="form-group">
+          <div class="form-group form-field">
             <label class="form-label" for="taskType">Tipo</label>
             <select class="form-select" id="taskType">
               <option value="prova">Prova</option>
@@ -293,9 +293,9 @@
               <option value="outro">Outro</option>
             </select>
           </div>
-          <div class="form-group">
+          <div class="form-group form-field">
             <label class="form-label" for="taskPriority">Prioridade</label>
-            <select class="form-select" id="taskPriority">
+            <select class="form-select" id="taskPriority" data-segmented="true">
               <option value="media">Média</option>
               <option value="alta">Alta</option>
               <option value="baixa">Baixa</option>
